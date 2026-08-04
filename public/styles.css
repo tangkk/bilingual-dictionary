@@ -38,6 +38,7 @@ button, input { font: inherit; }
   background: var(--paper); color: var(--ink); font-size: 17px; outline: none;
 }
 .searchbar input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+.searchbar input::-webkit-search-cancel-button { filter: grayscale(1) brightness(0); opacity: 1; }
 .searchbar button, .chip {
   border: 1px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); cursor: pointer;
 }
