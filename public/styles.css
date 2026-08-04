@@ -62,9 +62,16 @@ button, input { font: inherit; }
 .result-group-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 .result-group-head h2 { margin: 0; font-size: 15px; }
 .result-group-head span { color: var(--muted); font-size: 11px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 10px; }
+.source-cards { display: grid; gap: 12px; }
 .card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 15px; background: var(--paper); }
 .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.source-card { padding: 0; overflow: hidden; }
+.source-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 11px 15px; border-bottom: 1px solid var(--line); background: var(--wash); }
+.source-card-head h3 { margin: 0; font-size: 12px; letter-spacing: .035em; }
+.source-card-head span { color: var(--muted); font-size: 10px; }
+.source-entries { display: grid; }
+.source-entry { padding: 15px; }
+.source-entry + .source-entry { border-top: 1px solid var(--soft-line); }
 .word { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.015em; overflow-wrap: anywhere; }
 .pronunciation { margin-top: 4px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
 .pos-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
@@ -95,8 +102,8 @@ a, a:visited { color: var(--ink); text-decoration-color: #999; text-underline-of
   .shell { margin-top: 22px; }
   .searchbar { align-items: stretch; }
   .searchbar button { padding-inline: 15px; }
-  .cards { grid-template-columns: 1fr; }
   .card { padding: 13px; }
+  .source-card { padding: 0; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

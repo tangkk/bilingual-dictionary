@@ -91,28 +91,80 @@ function renderPos(tags = []) {
   return labels.length ? `<div class="pos-tags">${labels.slice(0, 4).map(label => `<span class="pos-tag">${escapeHTML(label)}</span>`).join('')}</div>` : '';
 }
 
-function renderChineseCard(item) {
-  const traditional = item.t && item.t !== item.s ? `<span class="traditional">${escapeHTML(item.t)}</span>` : '';
-  return `<article class="card">
-    <div class="card-head">
-      <div><h3 class="word">${escapeHTML(item.s)}${traditional}</h3><div class="pronunciation">${escapeHTML(item.p)}</div>${renderPos(item.g)}</div>
-      <span class="badge">${sourceBadge(item.x)}</span>
-    </div>
-    <ol class="translations">${item.d.slice(0, 12).map(text => `<li>${escapeHTML(text)}</li>`).join('')}</ol>
-  </article>`;
+function unique(values = []) {
+  return [...new Set(values.filter(Boolean))];
 }
 
-function renderEnglishCard(item) {
-  const translations = Array.isArray(item.z) ? item.z : [item.z];
+function groupBySource(items) {
+  const groups = new Map();
+  for (const item of items) {
+    if (!groups.has(item.x)) groups.set(item.x, []);
+    groups.get(item.x).push(item);
+  }
+  return [...groups.entries()].sort(([a], [b]) => (a === 'fd' ? -1 : b === 'fd' ? 1 : 0));
+}
+
+function aggregateChinese(items) {
+  const entries = new Map();
+  for (const item of items) {
+    const key = [item.s, item.t, item.p].join('\u0000');
+    if (!entries.has(key)) entries.set(key, {...item, d: [], g: []});
+    const entry = entries.get(key);
+    entry.d = unique([...entry.d, ...(item.d || [])]);
+    entry.g = unique([...entry.g, ...(item.g || [])]);
+  }
+  return [...entries.values()];
+}
+
+function aggregateEnglish(items) {
+  const entries = new Map();
+  for (const item of items) {
+    const key = item.x === 'fd'
+      ? [item.e, JSON.stringify(item.r || []), JSON.stringify(item.g || [])].join('\u0000')
+      : [item.z, item.t, item.p, JSON.stringify(item.g || [])].join('\u0000');
+    if (!entries.has(key)) entries.set(key, {...item, z: []});
+    const entry = entries.get(key);
+    const translations = Array.isArray(item.z) ? item.z : [item.z];
+    entry.z = unique([...entry.z, ...translations]);
+  }
+  return [...entries.values()];
+}
+
+function renderChineseEntry(item) {
+  const traditional = item.t && item.t !== item.s ? `<span class="traditional">${escapeHTML(item.t)}</span>` : '';
+  return `<section class="source-entry">
+    <div><h4 class="word">${escapeHTML(item.s)}${traditional}</h4><div class="pronunciation">${escapeHTML(item.p)}</div>${renderPos(item.g)}</div>
+    <ol class="translations">${item.d.slice(0, 12).map(text => `<li>${escapeHTML(text)}</li>`).join('')}</ol>
+  </section>`;
+}
+
+function renderEnglishEntry(item) {
   const pronunciation = [item.r?.slice(0, 4).join(' · '), item.p].filter(Boolean).join('  ');
-  const traditional = item.t && item.t !== item.z ? ` <span class="traditional">${escapeHTML(item.t)}</span>` : '';
-  return `<article class="card">
-    <div class="card-head">
-      <div><h3 class="word">${escapeHTML(item.e)}</h3>${pronunciation ? `<div class="pronunciation">${escapeHTML(pronunciation)}</div>` : ''}${renderPos(item.g)}</div>
-      <span class="badge">${sourceBadge(item.x)}</span>
-    </div>
-    <ul class="translations">${translations.slice(0, 16).map((text, index) => `<li>${escapeHTML(text)}${index === 0 ? traditional : ''}</li>`).join('')}</ul>
-  </article>`;
+  if (item.x === 'cc') {
+    const chinese = item.z[0] || '';
+    const traditional = item.t && item.t !== chinese ? `<span class="traditional">${escapeHTML(item.t)}</span>` : '';
+    return `<section class="source-entry">
+      <div><h4 class="word">${escapeHTML(chinese)}${traditional}</h4>${pronunciation ? `<div class="pronunciation">${escapeHTML(pronunciation)}</div>` : ''}${renderPos(item.g)}</div>
+    </section>`;
+  }
+  return `<section class="source-entry">
+    <div><h4 class="word">${escapeHTML(item.e)}</h4>${pronunciation ? `<div class="pronunciation">${escapeHTML(pronunciation)}</div>` : ''}${renderPos(item.g)}</div>
+    <ul class="translations">${item.z.slice(0, 16).map(text => `<li>${escapeHTML(text)}</li>`).join('')}</ul>
+  </section>`;
+}
+
+function renderSourceCards(items, language) {
+  return groupBySource(items).map(([source, sourceItems]) => {
+    const entries = language === 'zh' ? aggregateChinese(sourceItems) : aggregateEnglish(sourceItems);
+    const content = entries.map(language === 'zh' ? renderChineseEntry : renderEnglishEntry).join('');
+    return `<article class="card source-card">
+      <div class="source-card-head">
+        <h3>${sourceBadge(source)}</h3>
+        <span>${entries.length} 个词条</span>
+      </div>
+      <div class="source-entries">${content}</div>
+    </article>`;
+  }).join('');
 }
 
 function renderExample(item) {
@@ -185,12 +237,12 @@ async function search(rawValue, updateUrl = true) {
       setState(`没有找到“${raw}”。请尝试更短的词语或检查拼写。`);
     } else {
       state.hidden = true;
-      const cards = language === 'zh'
-        ? exact.slice(0, 30).map(renderChineseCard).join('')
-        : rankEnglish(exact, query).slice(0, 30).map(renderEnglishCard).join('');
+      const ranked = language === 'zh' ? exact.slice(0, 30) : rankEnglish(exact, query).slice(0, 30);
+      const cards = renderSourceCards(ranked, language);
+      const sourceCount = groupBySource(ranked).length;
       results.innerHTML = `${exact.length ? `<section class="result-group">
-        <div class="result-group-head"><h2>查询结果</h2><span>${exact.length} 条匹配</span></div>
-        <div class="cards">${cards}</div>
+        <div class="result-group-head"><h2>查询结果</h2><span>${sourceCount} 个来源 · ${exact.length} 条匹配</span></div>
+        <div class="source-cards">${cards}</div>
       </section>` : ''}
       ${renderExamples(examples)}
       ${suggestions.length ? `<section class="result-group">
