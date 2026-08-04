@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="一个基于 CC-CEDICT 与 FreeDict 的免费、开源、中英双向词典。">
+  <meta name="theme-color" content="#ffffff">
+  <title>双向词典 · Chinese ↔ English</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="intro">
+      <div class="eyebrow">CHINESE ↔ ENGLISH</div>
+      <h1>双向词典</h1>
+      <p>输入一个中文或英文词语，查看释义、词性与双语例句。查询在你的浏览器中完成，无需登录，也不会上传搜索内容。</p>
+    </header>
+
+    <section class="search-panel" aria-label="词典查询">
+      <form id="searchForm" class="searchbar" role="search">
+        <label class="sr-only" for="searchInput">查询中文或英文</label>
+        <input id="searchInput" type="search" inputmode="search" autocomplete="off" spellcheck="false" placeholder="例如：苹果 / apple" autofocus>
+        <button type="submit">查询</button>
+      </form>
+      <div class="search-meta">
+        <span id="direction">自动识别语言</span>
+        <button id="clearHistory" class="text-button" type="button">清除历史</button>
+      </div>
+    </section>
+
+    <section id="recentSection" class="recent" aria-labelledby="recentTitle" hidden>
+      <h2 id="recentTitle">最近查询</h2>
+      <div id="recentList" class="chips"></div>
+    </section>
+
+    <section id="state" class="state" aria-live="polite">
+      <div class="rule"></div>
+      <p>输入词语开始查询。支持简体、繁体中文和英文单词或短语。</p>
+    </section>
+
+    <section id="results" class="results" aria-live="polite"></section>
+
+    <footer>
+      <p>词典数据来自 <a href="https://www.mdbg.net/chinese/dictionary?page=cc-cedict">CC-CEDICT</a>、<a href="https://freedict.org/downloads/">FreeDict</a>、<a href="https://github.com/fxsjy/jieba">jieba</a> 与 <a href="https://tatoeba.org/downloads">Tatoeba</a>。</p>
+      <p><a href="./licenses.html">数据来源与许可证</a> · <span id="dataVersion">正在读取数据版本…</span></p>
+    </footer>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
